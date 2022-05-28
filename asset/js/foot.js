@@ -31,25 +31,25 @@ if (!userId() && !isOpen){
 }
 
 
-function post(uri,data,fn){
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST","//"+location.host+"/"+uri, true);
-    // 添加http头，发送信息至服务器时内容编码类型
-    xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 304)) {
-            fn.call(this, JSON.parse(xhr.responseText));
-        }
-    };
-    var _data=[];
-    if(!! userId()){
-        // data["userid"] = userId();
-    }
-    for(var i in data){
-        _data.push( i +"=" + encodeURI(data[i]));
-    }
-    xhr.send(_data.join("&"));
-}
+// function post(uri,data,fn){
+//     var xhr = new XMLHttpRequest();
+//     xhr.open("POST","//"+location.host+"/"+uri, true);
+//     // 添加http头，发送信息至服务器时内容编码类型
+//     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+//     xhr.onreadystatechange = function() {
+//         if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 304)) {
+//             fn.call(this, JSON.parse(xhr.responseText));
+//         }
+//     };
+//     var _data=[];
+//     if(!! userId()){
+//         // data["userid"] = userId();
+//     }
+//     for(var i in data){
+//         _data.push( i +"=" + encodeURI(data[i]));
+//     }
+//     xhr.send(_data.join("&"));
+// }
 
 function uploadblob(uri,blob,filetype,fn){
     var xhr = new XMLHttpRequest();
@@ -69,12 +69,6 @@ function uploadblob(uri,blob,filetype,fn){
     formdata.append("file",blob)
     xhr.send(formdata);
 }
-function uploadaudio(uri,blob,fn){
-    uploadblob(uri,blob,".mp3",fn)
-}
-function uploadvideo(uri,blob,fn){
-    uploadblob(uri,blob,".mp4",fn)
-}
 
 function upload(dom){
 
@@ -88,32 +82,8 @@ function upload(dom){
             app.sendpicmsg(res.data.data)
         }
     })
-
-    uploadfile("attach/upload",dom,function(res){
-        if(res.code==0){
-            app.sendpicmsg(res.data)
-        }
-
-    })
 }
 
-function uploadfile(uri,dom,fn){
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST","//"+location.host+"/"+uri, true);
-    // 添加http头，发送信息至服务器时内容编码类型
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 304)) {
-            fn.call(this, JSON.parse(xhr.responseText));
-        }
-    };
-    var _data=[];
-    var formdata = new FormData();
-    if(!! userId()){
-        formdata.append("userid",userId());
-    }
-    formdata.append("file",dom.files[0])
-    xhr.send(formdata);
-}
 
 
 var app = new Vue(
@@ -400,7 +370,8 @@ var app = new Vue(
 
             },
             initwebsocket: function () {
-                var url = "ws://" + location.host + "/chat?id=" + userId() + "&token=" + util.parseQuery("token");
+                var user = userInfo()
+                var url = "ws://" + location.host + "/chat?id=" + userId() + "&token=" + user.token;
                 this.webSocket = new WebSocket(url);
                 //消息处理
                 this.webSocket.onmessage = function (evt) {
@@ -419,9 +390,6 @@ var app = new Vue(
                 this.webSocket.onerror = function (evt) {
                     console.log(evt.data)
                 }
-                /*{
-                    this.webSocket.send()
-                }*/
             },
             sendmsg: function () {
 
@@ -445,15 +413,18 @@ var app = new Vue(
                 })
             },
             addfriend: function () {
-                var that = this;
-                //prompt
                 mui.prompt('', '请输入好友ID', '加好友', ['取消', '确认'], function (e) {
                     if (e.index === 1) {
                         if (isNaN(e.value) || e.value <= 0) {
                             mui.toast('格式错误');
                         } else {
-                            //mui.toast(e.value);
-                            that._addfriend(e.value)
+                            axios.post("/contact/addfriend",{ditId:parseInt(e.value),userId:userId()}).then(function (res){
+                                if(res.data.code !==0) {
+                                    mui.toast(res.data.msg)
+                                }else {
+                                    mui.toast("添加成功")
+                                }
+                            })
                         }
                     } else {
                         //mui.toast('您取消了入库');
@@ -461,38 +432,22 @@ var app = new Vue(
                 }, 'div');
                 document.querySelector('.mui-popup-input input').type = 'number';
             },
-            _addfriend: function (dstobj) {
-                var that = this
-                post("contact/addfriend", {dstId: dstobj, userId: userId()}, function (res) {
-                    if (res.code == 0) {
-                        mui.toast("添加成功");
-                        that.loadfriends();
-                    } else {
-                        mui.toast(res.msg);
-                    }
-                })
-            },
-            _joincomunity: function (dstobj) {
-                var that = this;
-                post("contact/joincommunity", {dstId: dstobj, userId: userId()}, function (res) {
-                    if (res.code == 0) {
-                        mui.toast("添加成功");
-
-                        that.loadcommunitys();
-                    } else {
-                        mui.toast(res.msg);
-                    }
-                })
-            },
-            joincomunity: function () {
+            joincommunity: function () {
                 var that = this;
                 mui.prompt('', '请输入群号', '加群', ['取消', '确认'], function (e) {
-                    if (e.index == 1) {
+                    if (e.index === 1) {
                         if (isNaN(e.value) || e.value <= 0) {
                             mui.toast('格式错误');
                         } else {
                             //mui.toast(e.value);
-                            that._joincomunity(e.value)
+                            axios.post("/contact/joincommunity",{dstId:parseInt(e.value),ownerId:userId()}).then(function (res ){
+                                if(res.data.code !== 0) {
+                                    mui.toast(res.data.msg)
+                                }else {
+                                    that.loadcommunitys()
+                                    mui.toast("添加成功")
+                                }
+                            })
                         }
                     } else {
                         //mui.toast('您取消了入库');

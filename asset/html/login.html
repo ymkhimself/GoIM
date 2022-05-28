@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/asset/css/mui.min.css"/>
+    <link rel="stylesheet" href="/asset/css/chat.css"/>
+    <link rel="stylesheet" href="/asset/css/audio.css"/>
+    <script src="/asset/js/mui.min.js"></script>
+    <script src="/asset/js/vue.min.js"></script>
+    <script src="/asset/js/axios.min.js"></script>
+    <script src="/asset/js/util.js"></script>
+</head>
+<body>
+<header class="mui-bar mui-bar-nav">
+    <h1 class="mui-title">登录</h1>
+</header>
+<div class="mui-content" id="pageapp">
+    <form id='login-form' class="mui-input-group">
+        <div class="mui-input-row">
+            <label>账号</label>
+            <input v-model="user.mobile" placeholder="请输入手机号" type="text" class="mui-input-clear mui-input">
+        </div>
+        <div class="mui-input-row">
+            <label>密码</label>
+            <input v-model="user.pwd" placeholder="请输入密码" type="password" class="mui-input-clear mui-input">
+        </div>
+    </form>
+    <div class="mui-content-padded">
+        <button @click="login" type="button" class="mui-btn mui-btn-block mui-btn-primary">登录</button>
+        <div class="link-area"><a id='reg' href="/asset/html/register.html">注册账号</a> <span class="spliter">|</span> <a
+                id='forgetPassword'>忘记密码</a>
+        </div>
+    </div>
+    <div class="mui-content-padded oauth-area">
+    </div>
+</div>
+</body>
+</html>
+<script>
+    var app = new Vue({
+        el: "#pageapp",
+        data: function () {
+            return {
+                user: {
+                    mobile: "",
+                    pwd: ""
+                }
+            }
+        },
+        methods: {
+            login: function () {
+                //检测手机号是否正确
+                console.log("login")
+                axios.post("/user/login", {mobile: this.user.mobile, pwd: this.user.pwd}).then(function (res) {
+                    if (res.data.code !== 0) {
+                        mui.toast(res.data.msg)
+                    } else {
+                        userInfo(res.data.data)
+                        userId(res.data.data.id)
+                        var url = "/asset/html/index.html?id="+res.data.data.id+"&token="+res.data.data.token;
+                        mui.toast("登录成功")
+                        location.href = url
+                    }
+                })
+                util.post("user/login", this.user).then(res => {
+                    console.log(res)
+                    if (res.code !== 0) {
+                        mui.toast(res.msg)
+                    } else {
+                        var url = "/chat/index.shtml?id=" + res.data.id
+                            + "&token=" + res.data.token
+                        userInfo(res.data)
+                        userId(res.data.id)
+                        location.href = url
+                        //mui.alert(url)
+                    }
+                })
+            },
+        }
+    })
+</script>

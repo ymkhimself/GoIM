@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/asset/css/mui.min.css"/>
+    <link rel="stylesheet" href="/asset/css/chat.css"/>
+    <link rel="stylesheet" href="/asset/css/audio.css"/>
+    <script src="/asset/js/mui.min.js"></script>
+    <script src="/asset/js/vue.min.js"></script>
+    <script src="/asset/js/axios.min.js"></script>
+    <script src="/asset/js/util.js"></script>
+    <script src="/asset/js/foot.js"></script>
+
+    <title>GoIM</title>
+</head>
+<body>
+
+<nav class="mui-bar mui-bar-tab" id="menubar">
+    <a class="mui-tab-item mui-active" href="#tabbar-concat">
+        <span class="mui-icon mui-icon-chat"></span>
+        <span class="mui-tab-label">好友</span>
+    </a>
+    <a class="mui-tab-item" href="#tabbar-group">
+        <span class="mui-icon mui-icon-chatboxes"><span class="mui-badge">9</span></span>
+        <span class="mui-tab-label">群聊</span>
+    </a>
+    <a class="mui-tab-item" href="#tabbar-profile">
+        <span class="mui-icon mui-icon-person"></span>
+        <span class="mui-tab-label">我的</span>
+    </a>
+
+</nav>
+<header class="mui-bar mui-bar-nav">
+</header>
+<div class="mui-content" id="pageapp">
+    <!--联系人-->
+    <div id="tabbar-concat" class="mui-control-content mui-active" v-show="win=='main'">
+        <header class="mui-bar mui-bar-nav">
+
+            <h1 class="mui-title">联系人</h1>
+        </header>
+        <ul class="mui-table-view mui-table-view-chevron">
+            <li v-for="item in friends" class="mui-table-view-cell mui-media" @tap="singlemsg(item)">
+                <a class="mui-navigate-right">
+                    <img class="mui-media-object mui-pull-left" :src="item.avatar ||'/asset/images/avatar0.png'">
+                    <div class="mui-media-body">
+                        <span v-text="item.nickname"></span>
+                        <p class='mui-ellipsis' v-text="item.memo"></p>
+                    </div>
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!--群聊-->
+    <div id="tabbar-group" class="mui-control-content" v-show="win=='main'">
+        <header class="mui-bar mui-bar-nav">
+            <h1 class="mui-title">群聊</h1>
+        </header>
+        <ul class="mui-table-view mui-table-view-chevron">
+            <li v-for="item in communitys" class="mui-table-view-cell mui-media" @tap="groupmsg(item)">
+                <a class="mui-navigate-right">
+                    <img class="mui-media-object mui-pull-left" :src="item.icon">
+                    <div class="mui-media-body">
+                        <span v-text="item.name+'('+item.id+')'"></span>
+                        <p class='mui-ellipsis' v-text="item.memo"></p>
+                    </div>
+                </a>
+            </li>
+
+        </ul>
+    </div>
+    <!--个人中心-->
+    <div id="tabbar-profile" class="mui-control-content" v-show="win=='main'">
+        <header class="mui-bar mui-bar-nav">
+            <h1 class="mui-title">个人中心</h1>
+        </header>
+
+        <ul class="mui-table-view">
+
+            <li @click="addfriend" class="mui-table-view-cell">
+                <a class="mui-navigate-right">
+                    添加好友
+                </a>
+            </li>
+            <li @click="joincommunity" class="mui-table-view-cell">
+                <a class="mui-navigate-right">
+                    加入社群
+                </a>
+            </li>
+            <li class="mui-table-view-cell">
+                <a class="mui-navigate-right" href="createcom.shtml">
+                    创建社群
+                </a>
+            </li>
+        </ul>
+        <ul class="mui-table-view" style="margin-top: 25px;">
+            <li @click="quit" class="mui-table-view-cell">
+                <a style="text-align: center;color: #FF3B30;">
+                    退出登录
+                </a>
+            </li>
+        </ul>
+    </div>
+    <!--聊天主界面-->
+    <div v-show="win!='main'">
+        <header class="mui-bar mui-bar-nav">
+            <a class="mui-icon mui-icon-left-nav mui-pull-left" @tap="win='main'"></a>
+            <h1 class="mui-title" v-text="title"></h1>
+        </header>
+        <div id="convo" data-from="Sonu Joshi">
+
+            <ul class="chat-thread">
+                <!--群聊且item.dstid=当前msgcontext.dstid
+               <span v-text="JSON.stringify(msglist)"></span>
+                 -->
+                <!--单聊且是他发的item.userid=msgcontext.dstid && 发给我的 item.dstid=myid 或者是我item.userid= myid发的,&&发给他的item.dstid= msgcontext.dstid 我发给他的  -->
+                <li class="chat " :class="item.ismine?'mine':'other'" v-for="item in msglist"
+                    v-if="item.msg.cmd==msgcontext.cmd && (( item.msg.cmd==10 &&  (item.ismine? item.msg.dstid==msgcontext.dstid : item.msg.dstid==msgcontext.userid )) || ( item.msg.cmd==11 &&  (item.msg.dstid==msgcontext.dstid))) ">
+
+                    <div>
+                        <img class="avatar" :src="item.user.avatar"/>
+                    </div>
+
+                    <span></span>
+                    <div class="content">
+                        <div v-if="item.msg.media==1" v-text="item.msg.content"></div>
+                        <img class="pic" v-if="item.msg.media==4" :src="item.msg.url"/>
+                        <div v-if="item.msg.media==3" @tap="playaudio(item.msg.url)">
+                            <img class="audio" src="/asset/images/audiom.png"/>
+                            <span v-text="item.msg.amount"></span>
+                        </div>
+                    </div>
+                </li>
+
+
+            </ul>
+        </div>
+        <div class="flex-container">
+            <div class="item-1" @tap="txtstat='audio'" v-if="txtstat=='kbord'">
+                <img src="/asset/images/audio.png"/>
+            </div>
+            <div class="item-1" @tap="txtstat='kbord'" v-if="txtstat=='audio'">
+                <img src="/asset/images/kbord.png"/>
+            </div>
+            <div class="item-2" v-if="txtstat=='kbord'">
+                <input placeholder="这里写点啥" class="text" type="text" v-model="txtmsg"/>
+            </div>
+            <div class="item-2" v-if="txtstat=='audio'">
+                <input value="请按住说话" type="button" class="text" style="margin-top: 5px;width: 100%; text-align: center"
+                       @touchstart="startrecorder" @touchend="stoprecorder">
+
+                </input>
+            </div>
+            <div class="item-3" @tap="panelstat='doutu'">
+                <img src="/asset/images/smile.png"/>
+            </div>
+            <div class="item-4" v-if="!txtmsg" @tap="panelstat='more'">
+                <img src="/asset/images/more.png"/>
+            </div>
+            <div class="item-4" v-if="!!txtmsg" @tap="sendtxtmsg(txtmsg)">
+                <img src="/asset/images/send.png"/>
+            </div>
+        </div>
+        <div id="panels" style="display: flex">
+            <div v-if="panelstat=='doutu'">
+                <div class="doutures">
+                    <div @tap="sendpicmsg(item)" class="res" v-for="item in doutu.choosed.assets">
+                        <img :class="doutu.choosed.size ||'small'" :src="item"/>
+                    </div>
+                </div>
+                <div class="doutupkg">
+                    <div class="pkg" @tap="doutu.choosed=item" v-for="item in doutu.packages">
+                        <img :class="item.size || 'small'" :src="item.icon"/>
+                    </div>
+                </div>
+            </div>
+            <div v-if="panelstat=='more'" class="plugins">
+                <div class="plugin" @tap="dispatchplugin(item)" v-for="item in plugins">
+                    <img :src="item.icon"/>
+                    <div v-html="item.slot"></div>
+                    <p v-text="item.name"></p>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <audio id="audio" style="display: none"></audio>
+    <audio id="audio4play" style="display: none"></audio>
+</div>
+</body>
+</html>
