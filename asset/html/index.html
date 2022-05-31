@@ -85,11 +85,11 @@
             </li>
             <li @click="joincommunity" class="mui-table-view-cell">
                 <a class="mui-navigate-right">
-                    加入社群
+                    加入群聊
                 </a>
             </li>
-            <li class="mui-table-view-cell">
-                <a class="mui-navigate-right" href="createcom.shtml">
+            <li @click="createcommunity" class="mui-table-view-cell">
+                <a class="mui-navigate-right">
                     创建社群
                 </a>
             </li>
@@ -125,7 +125,7 @@
                     <span></span>
                     <div class="content">
                         <div v-if="item.msg.media==1" v-text="item.msg.content"></div>
-                        <img class="pic" v-if="item.msg.media==4" :src="item.msg.url"/>
+                        <img class="pic" v-if="item.msg.media==2" :src="item.msg.url"/>
                         <div v-if="item.msg.media==3" @tap="playaudio(item.msg.url)">
                             <img class="audio" src="/asset/images/audiom.png"/>
                             <span v-text="item.msg.amount"></span>

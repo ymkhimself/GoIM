@@ -1,32 +1,32 @@
-function userInfo(o){
-    if(typeof  o =="undefined"){
+function userInfo(o) {
+    if (typeof o == "undefined") {
         var r = sessionStorage.getItem("userinfo");
-        if(!!r){
+        if (!!r) {
             return JSON.parse(r);
-        }else{
+        } else {
             return null
         }
-    }else{
-        sessionStorage.setItem("userinfo",JSON.stringify(o));
+    } else {
+        sessionStorage.setItem("userinfo", JSON.stringify(o));
     }
 }
 
-function userId(id){
-    if(typeof  id =="undefined"){
+function userId(id) {
+    if (typeof id == "undefined") {
         var r = sessionStorage.getItem("userid");
-        if(!r){
+        if (!r) {
             return 0;
-        }else{
+        } else {
             return parseInt(r)
         }
-    }else{
-        sessionStorage.setItem("userid",id);
+    } else {
+        sessionStorage.setItem("userid", id);
     }
 }
 
 var url = location.href;
-var isOpen = url.indexOf("/login")>-1 || url.indexOf("/register")>-1
-if (!userId() && !isOpen){
+var isOpen = url.indexOf("/login") > -1 || url.indexOf("/register") > -1
+if (!userId() && !isOpen) {
     // location.href = "login.shtml";
 }
 
@@ -51,39 +51,38 @@ if (!userId() && !isOpen){
 //     xhr.send(_data.join("&"));
 // }
 
-function uploadblob(uri,blob,filetype,fn){
+function uploadblob(uri, blob, filetype, fn) {
     var xhr = new XMLHttpRequest();
-    xhr.open("POST","//"+location.host+"/"+uri, true);
+    xhr.open("POST", "//" + location.host + "/" + uri, true);
     // 添加http头，发送信息至服务器时内容编码类型
-    xhr.onreadystatechange = function() {
+    xhr.onreadystatechange = function () {
         if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 304)) {
             fn.call(this, JSON.parse(xhr.responseText));
         }
     };
-    var _data=[];
+    var _data = [];
     var formdata = new FormData();
-    formdata.append("filetype",filetype);
-    if(!! userId()){
-        formdata.append("userid",userId());
+    formdata.append("filetype", filetype);
+    if (!!userId()) {
+        formdata.append("userid", userId());
     }
-    formdata.append("file",blob)
+    formdata.append("file", blob)
     xhr.send(formdata);
 }
 
-function upload(dom){
+function upload(dom) {
 
     var data = new FormData();
-    data.append('file',dom.files[0])
-    data.append('filetype','.jpg')
-    axios.post("/upload",data).then(function (res){
-        if(res.data.code !== 0) {
+    data.append('file', dom.files[0])
+    data.append('filetype', '.jpg')
+    axios.post("/upload", data).then(function (res) {
+        if (res.data.code !== 0) {
             mui.toast(res.data.msg)
-        }else{
+        } else {
             app.sendpicmsg(res.data.data)
         }
     })
 }
-
 
 
 var app = new Vue(
@@ -106,7 +105,7 @@ var app = new Vue(
             title: "",
             doutu: {
                 config: {
-                    "baseurl": "/asset/plugins/doutu/",
+                    "baseurl": "/asset/plugins/doutu",
                     "pkgids": ["mkgif", "emoj"]
                 },
                 packages: [],
@@ -223,14 +222,30 @@ var app = new Vue(
 
                         this.recorder.ondataavailable = (event) => {
                             console.log("ondataavailable");
-                            uploadblob("attach/upload", event.data, ".mp3", res => {
-                                var duration = Math.ceil((new Date().getTime() - this.duration) / 1000);
-                                this.sendaudiomsg(res.data, duration);
+                            var form = new FormData();
+                            form.append('file', event.data)
+                            form.append('filetype', '.mp3')
+                            var that = this
+                            axios.post("/upload", form).then(function (res) {
+                                if (res.data.code !== 0) {
+                                    mui.toast(res.data.msg)
+                                } else {
+                                    var duration = Math.ceil((new Date().getTime() - that.duration) / 1000);
+                                    that.sendaudiomsg(res.data.data, duration)
+                                }
                             })
                             stream.getTracks().forEach(function (track) {
                                 track.stop();
                             });
                             this.showprocess = false
+                            // uploadblob("attach/upload", event.data, ".mp3", res => {
+                            //     var duration = Math.ceil((new Date().getTime() - this.duration) / 1000);
+                            //     this.sendaudiomsg(res.data, duration);
+                            // })
+                            // stream.getTracks().forEach(function (track) {
+                            //     track.stop();
+                            // });
+                            // this.showprocess = false
                         }
                         this.recorder.start();
                     }.bind(this)).catch(function (err) {
@@ -245,7 +260,6 @@ var app = new Vue(
                 }
                 this.showprocess = false
                 console.log("stoprecorder")
-
             },
             dispatchplugin: function (item) {
                 switch (item.id) {
@@ -282,7 +296,7 @@ var app = new Vue(
                         }
                         pkginfo.icon = baseurl + pkginfo.icon;
                         that.doutu.packages.push(pkginfo)
-                        if (that.doutu.choosed.pkgid == pkginfo.id) {
+                        if (that.doutu.choosed.pkgid === pkginfo.id) {
                             that.doutu.choosed.assets = pkginfo.assets;
                         }
 
@@ -313,7 +327,7 @@ var app = new Vue(
             sendtxtmsg: function (txt) {
                 //{id:1,userid:2,dstid:3,cmd:10,media:1,content:"hello"}
                 var msg = this.createmsgcontext();
-                msg.media = 1;
+                msg.media = 1;  //1是
                 msg.content = txt;
                 this.showmsg(userInfo(), msg);
                 this.webSocket.send(JSON.stringify(msg))
@@ -329,7 +343,7 @@ var app = new Vue(
             sendaudiomsg: function (url, num) {
                 //{id:1,userid:2,dstid:3,cmd:10,media:3,url:"http://www.a,com/dsturl.mp3",anount:40}
                 var msg = this.createmsgcontext();
-                msg.media = 3;
+                msg.media = 3;  //3是语音消息
                 msg.url = url;
                 msg.amount = num;
                 this.showmsg(userInfo(), msg)
@@ -418,10 +432,13 @@ var app = new Vue(
                         if (isNaN(e.value) || e.value <= 0) {
                             mui.toast('格式错误');
                         } else {
-                            axios.post("/contact/addfriend",{ditId:parseInt(e.value),userId:userId()}).then(function (res){
-                                if(res.data.code !==0) {
+                            axios.post("/contact/addfriend", {
+                                ditId: parseInt(e.value),
+                                userId: userId()
+                            }).then(function (res) {
+                                if (res.data.code !== 0) {
                                     mui.toast(res.data.msg)
-                                }else {
+                                } else {
                                     mui.toast("添加成功")
                                 }
                             })
@@ -440,10 +457,13 @@ var app = new Vue(
                             mui.toast('格式错误');
                         } else {
                             //mui.toast(e.value);
-                            axios.post("/contact/joincommunity",{dstId:parseInt(e.value),ownerId:userId()}).then(function (res ){
-                                if(res.data.code !== 0) {
+                            axios.post("/contact/joincommunity", {
+                                dstId: parseInt(e.value),
+                                ownerId: userId()
+                            }).then(function (res) {
+                                if (res.data.code !== 0) {
                                     mui.toast(res.data.msg)
-                                }else {
+                                } else {
                                     that.loadcommunitys()
                                     mui.toast("添加成功")
                                 }
@@ -454,6 +474,31 @@ var app = new Vue(
                     }
                 }, 'div');
                 document.querySelector('.mui-popup-input input').type = 'number';
+            },
+            createcommunity: function () {
+                var that = this;
+                mui.prompt('', '请输入群名', '创建群聊', ['取消', '确认'], function (e) {
+                    if (e.index === 1) {
+                        if (e.value !== '') {
+                            mui.toast('格式错误');
+                        } else {
+                            //mui.toast(e.value);
+                            axios.post("/contact/createcommunity", {
+                                name: parseInt(e.value),
+                                ownerId:userId(),
+                            }).then(function (res) {
+                                if (res.data.code !== 0) {
+                                    mui.toast(res.data.msg)
+                                } else {
+                                    that.loadcommunitys()
+                                    mui.toast("创建成功,群号为"+res.data.data)
+                                }
+                            })
+                        }
+                    } else {
+                        //mui.toast('您取消了入库');
+                    }
+                }, 'div');
             },
             quit: function () {
                 sessionStorage.removeItem("userid")
