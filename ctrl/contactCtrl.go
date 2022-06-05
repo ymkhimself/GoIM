@@ -15,12 +15,13 @@ func LoadFriend(c *gin.Context) {
 	id := c.Param("id")
 	friends := make([]model.User, 0)
 	if err := db.DB.Model(&model.User{}).
-		Joins("left join contacts on contacts.owner_id = ? AND contacts.cate = ? AND users.id = contacts.owner_id", id, 1).
+		Joins("inner join contacts on contacts.owner_id = ? AND contacts.cate = ? AND users.id = contacts.dst_id", id, 1).
 		Scan(&friends).Error; err != nil {
 		log.Println(err.Error())
 		util.RespFail(c, "加载失败")
 		return
 	}
+	log.Println(friends)
 	util.RespSuccess(c, "", friends)
 }
 
@@ -28,7 +29,7 @@ func LoadCommunity(c *gin.Context) {
 	id := c.Param("id")
 	communitys := make([]model.Community, 0)
 	if err := db.DB.Model(&model.Community{}).
-		Joins("left join contacts on contacts.owner_id = ? AND contacts.cate = ? AND communities.id = contacts.dst_id", id, 2).
+		Joins("inner join contacts on contacts.owner_id = ? AND contacts.cate = ? AND communities.id = contacts.dst_id", id, 2).
 		Scan(&communitys).Error; err != nil {
 		log.Println(err.Error())
 		util.RespFail(c, "加载失败")
@@ -47,6 +48,9 @@ func AddFriend(c *gin.Context) {
 	c.Bind(&form)
 	var contact model.Contact
 
+	if form.DstId == form.OwnerId {
+		util.RespFail(c,"不能添加自己为好友")
+	}
 	var user model.User
 	db.DB.Where("id = ?", form.DstId).First(&user)
 	if user.ID == 0 {

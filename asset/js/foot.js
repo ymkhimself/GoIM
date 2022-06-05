@@ -188,6 +188,7 @@ var app = new Vue(
                             form.append('file', event.data)
                             form.append('filetype', '.mp3')
                             var that = this
+                            console.log("触发了")
                             axios.post("/attach/upload", form).then(function (res) {
                                 if (res.data.code !== 0) {
                                     mui.toast(res.data.msg)
@@ -241,15 +242,20 @@ var app = new Vue(
             createmsgcontext: function () {
                 return JSON.parse(JSON.stringify(this.msgcontext))
             },
+            showweixin: function () {
+                mui.alert("请加微信号jiepool-winlion索取")
+            },
             loaddoutures: function () {
                 var res = [];
                 var config = this.doutu.config;
                 for (var i in config.pkgids) {
                     res[config.pkgids[i]] = (config.baseurl + "/" + config.pkgids[i] + "/info.json")
                 }
+                // console.log(res)
                 var that = this;
                 for (var id in res) {
-                    axios.get(res[id]).then(function (pkginfo) {
+                    axios.get(res[id]).then(function (res) {
+                        pkginfo = res.data
                         var baseurl = config.baseurl + "/" + pkginfo.id + "/"
                         for (var j in pkginfo.assets) {
                             pkginfo.assets[j] = baseurl + pkginfo.assets[j];
@@ -274,9 +280,6 @@ var app = new Vue(
                     //
                     // })
                 }
-            },
-            showweixin: function () {
-                mui.alert("请加微信号jiepool-winlion索取")
             },
             showmsg: function (user, msg) {
                 var data = {}
@@ -323,7 +326,6 @@ var app = new Vue(
                 this.webSocket.send(JSON.stringify(msg))
             },
             singlemsg: function (user) {
-                //console.log(user)
                 this.win = "single";
                 this.title = "和" + user.nickname + "聊天中";
                 this.msgcontext.dstId = parseInt(user.id);
@@ -339,21 +341,25 @@ var app = new Vue(
             loaduserinfo: function (userid, cb) {
                 userid = "" + userid;
                 var userinfo = this.usermap[userid];
+                var that = this
                 if (!userinfo) {
-                    post("user/find", {id: parseInt(userid)}, function (res) {
-                        cb(res.data);
-                        this.usermap[userid] = res.data;
-                    }.bind(this))
+                    axios.get("/user/"+parseInt(userid)).then(function (res) {
+                        if(res.data.code !== 0) {
+                            mui.toast(res.data.msg)
+                        }else {
+                            cb(res.data.data);
+                            that.usermap[userid] = res.data.data;
+                        }
+                    })
                 } else {
                     cb(userinfo)
                 }
             },
             onmessage: function (data) {
-
                 this.loaduserinfo(data.userId, function (user) {
+                    // console.log(user)
                     this.showmsg(user, data)
                 }.bind(this))
-
             },
             initwebsocket: function () {
                 var user = userInfo()
@@ -370,11 +376,11 @@ var app = new Vue(
                 }.bind(this)
                 //关闭回调
                 this.webSocket.onclose = function (evt) {
-                    console.log(evt.data)
+                    console.log("ws 关闭")
                 }
                 //出错回调
                 this.webSocket.onerror = function (evt) {
-                    console.log(evt.data)
+                    console.log("ws 出错")
                 }
             },
             sendmsg: function () {
@@ -387,12 +393,12 @@ var app = new Vue(
                         mui.toast("加载失败")
                     } else {
                         that.friends = res.data.data || [];
-                        var usermap = new Map();
+                        var umap = new Map();
                         for (var i in res.data.data) {
                             var k = "" + res.data.data[i].id
-                            usermap[k] = res.data.data[i];
+                            umap.set(k,res.data.data[i])
                         }
-                        this.usermap = usermap;
+                        this.usermap = umap
                     }
                 })
                 // post("contact/loadfriend", {userId: userId()}, function (res) {
@@ -425,8 +431,8 @@ var app = new Vue(
                             mui.toast('格式错误');
                         } else {
                             axios.post("/contact/addfriend", {
-                                ditId: parseInt(e.value),
-                                userId: userId()
+                                dstId: parseInt(e.value),
+                                ownerId: userId()
                             }).then(function (res) {
                                 if (res.data.code !== 0) {
                                     mui.toast(res.data.msg)
@@ -495,7 +501,7 @@ var app = new Vue(
             quit: function () {
                 sessionStorage.removeItem("userid")
                 sessionStorage.removeItem("userinfo")
-                location.href = "login.shtml"
+                location.href = "login.html"
             }
         },
         watch: {

@@ -19,6 +19,7 @@ func InitRouter()*gin.Engine {
 	//用户相关
 	r.POST("/user/login",ctrl.Login)
 	r.POST("/user/register",ctrl.Register)
+	r.GET("/user/:id",ctrl.Find)
 
 	//聊天相关
 	r.GET("/chat",ctrl.Chat)

@@ -5,6 +5,7 @@ import (
 	"GoIM/model"
 	"GoIM/util"
 	"encoding/json"
+	"fmt"
 	"github.com/fatih/set"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -20,14 +21,12 @@ type Node struct {
 	GroupSets set.Interface
 }
 
-var clientMap map[int]*Node = make(map[int]*Node, 0)
+var clientMap = make(map[int]*Node, 0)
 var mutex sync.RWMutex
 
 func Chat(c *gin.Context) {
 	//var user model.User
 	id, _ := strconv.Atoi(c.Query("id"))
-
-
 
 	conn, err := (&websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
@@ -48,6 +47,7 @@ func Chat(c *gin.Context) {
 	//获取全部群的id
 	comIds := make([]int,0)
 	if err :=db.DB.Select("dist_id").Where("owner_id = ? ADN cate = 1",id).Error;err != nil {
+		log.Println(err.Error())
 		util.RespFail(c,"加载失败")
 		return
 	}
@@ -82,11 +82,12 @@ func recvproc(node *Node) {
 			return
 		}
 		dispatch(data)
+		fmt.Println("recv<=%s",data)
 	}
 }
 
 func AddCommunityId(userId, comId int) {
-	mutex.RLock()
+	mutex.Lock()
 	node,ok := clientMap[userId]
 	if ok {
 		node.GroupSets.Add(comId)
@@ -97,7 +98,7 @@ func AddCommunityId(userId, comId int) {
 func sendMsg(dstId int, msg []byte) {
 	mutex.RLock()
 	node, ok := clientMap[dstId]
-	mutex.Unlock()
+	mutex.RUnlock()
 	if ok {
 		node.DataQueue <- msg
 	}

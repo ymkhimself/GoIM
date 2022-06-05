@@ -6,6 +6,7 @@ import (
 	"GoIM/util"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"math/rand"
 	"time"
 )
@@ -63,4 +64,15 @@ func Register(c *gin.Context) {
 	user.Token  = fmt.Sprintf("%08d",rand.Int31())
 	db.DB.Create(&user)
 	util.RespSuccess(c,"注册成功",nil)
+}
+
+func Find(c *gin.Context) {
+	id := c.Param("id")
+	var user model.User
+	if err := db.DB.Where("id = ?",id).First(&user).Error; err != nil {
+		log.Println(err.Error())
+		util.RespFail(c,"查询用户信息失败")
+		return
+	}
+	util.RespSuccess(c,"",user)
 }
