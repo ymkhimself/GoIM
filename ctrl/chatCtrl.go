@@ -24,16 +24,14 @@ var clientMap map[int]*Node = make(map[int]*Node, 0)
 var mutex sync.RWMutex
 
 func Chat(c *gin.Context) {
-	var user model.User
+	//var user model.User
 	id, _ := strconv.Atoi(c.Query("id"))
-	token := c.Query("token")
 
-	db.DB.Where("id = ?", id).First(&user)
-	isValida := token == user.Token
+
 
 	conn, err := (&websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
-			return isValida
+			return true
 		},
 	}).Upgrade(c.Writer, c.Request, nil)
 	if err != nil {

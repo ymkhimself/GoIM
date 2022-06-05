@@ -31,51 +31,13 @@ if (!userId() && !isOpen) {
 }
 
 
-// function post(uri,data,fn){
-//     var xhr = new XMLHttpRequest();
-//     xhr.open("POST","//"+location.host+"/"+uri, true);
-//     // 添加http头，发送信息至服务器时内容编码类型
-//     xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-//     xhr.onreadystatechange = function() {
-//         if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 304)) {
-//             fn.call(this, JSON.parse(xhr.responseText));
-//         }
-//     };
-//     var _data=[];
-//     if(!! userId()){
-//         // data["userid"] = userId();
-//     }
-//     for(var i in data){
-//         _data.push( i +"=" + encodeURI(data[i]));
-//     }
-//     xhr.send(_data.join("&"));
-// }
-
-function uploadblob(uri, blob, filetype, fn) {
-    var xhr = new XMLHttpRequest();
-    xhr.open("POST", "//" + location.host + "/" + uri, true);
-    // 添加http头，发送信息至服务器时内容编码类型
-    xhr.onreadystatechange = function () {
-        if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 304)) {
-            fn.call(this, JSON.parse(xhr.responseText));
-        }
-    };
-    var _data = [];
-    var formdata = new FormData();
-    formdata.append("filetype", filetype);
-    if (!!userId()) {
-        formdata.append("userid", userId());
-    }
-    formdata.append("file", blob)
-    xhr.send(formdata);
-}
 
 function upload(dom) {
 
     var data = new FormData();
     data.append('file', dom.files[0])
     data.append('filetype', '.jpg')
-    axios.post("/upload", data).then(function (res) {
+    axios.post("/attach/upload", data).then(function (res) {
         if (res.data.code !== 0) {
             mui.toast(res.data.msg)
         } else {
@@ -84,10 +46,9 @@ function upload(dom) {
     })
 }
 
-
 var app = new Vue(
     {
-        el: "#pageapp",
+        el: "#app",
         data: {
             usermap: {},
             friends: [],
@@ -103,6 +64,7 @@ var app = new Vue(
             panelstat: "kbord",
             txtstat: "kbord",
             title: "",
+            token: "",
             doutu: {
                 config: {
                     "baseurl": "/asset/plugins/doutu",
@@ -226,7 +188,7 @@ var app = new Vue(
                             form.append('file', event.data)
                             form.append('filetype', '.mp3')
                             var that = this
-                            axios.post("/upload", form).then(function (res) {
+                            axios.post("/attach/upload", form).then(function (res) {
                                 if (res.data.code !== 0) {
                                     mui.toast(res.data.msg)
                                 } else {
@@ -287,9 +249,7 @@ var app = new Vue(
                 }
                 var that = this;
                 for (var id in res) {
-                    //console.log("res[i]",id,res[id])
-                    post(res[id], {}, function (pkginfo) {
-                        //console.log("post res[i]",id,res[id],pkginfo)
+                    axios.get(res[id]).then(function (pkginfo) {
                         var baseurl = config.baseurl + "/" + pkginfo.id + "/"
                         for (var j in pkginfo.assets) {
                             pkginfo.assets[j] = baseurl + pkginfo.assets[j];
@@ -299,8 +259,20 @@ var app = new Vue(
                         if (that.doutu.choosed.pkgid === pkginfo.id) {
                             that.doutu.choosed.assets = pkginfo.assets;
                         }
-
                     })
+                    // post(res[id], {}, function (pkginfo) {
+                    //     //console.log("post res[i]",id,res[id],pkginfo)
+                    //     var baseurl = config.baseurl + "/" + pkginfo.id + "/"
+                    //     for (var j in pkginfo.assets) {
+                    //         pkginfo.assets[j] = baseurl + pkginfo.assets[j];
+                    //     }
+                    //     pkginfo.icon = baseurl + pkginfo.icon;
+                    //     that.doutu.packages.push(pkginfo)
+                    //     if (that.doutu.choosed.pkgid === pkginfo.id) {
+                    //         that.doutu.choosed.assets = pkginfo.assets;
+                    //     }
+                    //
+                    // })
                 }
             },
             showweixin: function () {
@@ -385,7 +357,7 @@ var app = new Vue(
             },
             initwebsocket: function () {
                 var user = userInfo()
-                var url = "ws://" + location.host + "/chat?id=" + userId() + "&token=" + user.token;
+                var url = "ws://" + location.host + "/chat?id=" + userId();
                 this.webSocket = new WebSocket(url);
                 //消息处理
                 this.webSocket.onmessage = function (evt) {
@@ -410,21 +382,41 @@ var app = new Vue(
             },
             loadfriends: function () {
                 var that = this;
-                post("contact/loadfriend", {userId: userId()}, function (res) {
-                    that.friends = res.data.data || [];
-                    var usermap = new Map();
-                    for (var i in res.data.data) {
-                        var k = "" + res.data.data[i].id
-                        usermap[k] = res.data.data[i];
+                axios.get("/contact/loadfriend/" + userId()).then(function (res) {
+                    if (res.data.code !== 0) {
+                        mui.toast("加载失败")
+                    } else {
+                        that.friends = res.data.data || [];
+                        var usermap = new Map();
+                        for (var i in res.data.data) {
+                            var k = "" + res.data.data[i].id
+                            usermap[k] = res.data.data[i];
+                        }
+                        this.usermap = usermap;
                     }
-                    this.usermap = usermap;
-                }.bind(this))
+                })
+                // post("contact/loadfriend", {userId: userId()}, function (res) {
+                //     that.friends = res.data.data || [];
+                //     var usermap = new Map();
+                //     for (var i in res.data.data) {
+                //         var k = "" + res.data.data[i].id
+                //         usermap[k] = res.data.data[i];
+                //     }
+                //     this.usermap = usermap;
+                // }.bind(this))
             },
             loadcommunitys: function () {
                 var that = this;
-                post("contact/loadcommunity", {userId: userId()}, function (res) {
-                    that.communitys = res.data.data || [];
+                axios.get("/contact/loadcommunity/" + userId()).then(function (res) {
+                    if (res.data.code !== 0) {
+                        mui.toast("加载出错")
+                    } else {
+                        that.communitys = res.data.data || [];
+                    }
                 })
+                // post("contact/loadcommunity", {userId: userId()}, function (res) {
+                //     that.communitys = res.data.data || [];
+                // })
             },
             addfriend: function () {
                 mui.prompt('', '请输入好友ID', '加好友', ['取消', '确认'], function (e) {
@@ -485,13 +477,13 @@ var app = new Vue(
                             //mui.toast(e.value);
                             axios.post("/contact/createcommunity", {
                                 name: parseInt(e.value),
-                                ownerId:userId(),
+                                ownerId: userId(),
                             }).then(function (res) {
                                 if (res.data.code !== 0) {
                                     mui.toast(res.data.msg)
                                 } else {
                                     that.loadcommunitys()
-                                    mui.toast("创建成功,群号为"+res.data.data)
+                                    mui.toast("创建成功,群号为" + res.data.data)
                                 }
                             })
                         }
@@ -505,8 +497,6 @@ var app = new Vue(
                 sessionStorage.removeItem("userinfo")
                 location.href = "login.shtml"
             }
-
-
         },
         watch: {
             "win": function (n, o) {
@@ -520,3 +510,4 @@ var app = new Vue(
         }
     }
 )
+

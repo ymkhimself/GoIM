@@ -11,7 +11,7 @@ import (
 )
 
 type LoginForm struct {
-	Mobile int    `json:"mobile"`
+	Mobile string    `json:"mobile"`
 	Pwd    string `json:"pwd"`
 }
 

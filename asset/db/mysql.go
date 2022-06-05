@@ -1,6 +1,7 @@
 package db
 
 import (
+	"GoIM/model"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -13,4 +14,7 @@ func init() {
 	if err != nil {
 		panic(err.Error())
 	}
+	DB.AutoMigrate(&model.User{})
+	DB.AutoMigrate(&model.Contact{})
+	DB.AutoMigrate(&model.Community{})
 }

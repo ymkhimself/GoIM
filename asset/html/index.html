@@ -6,12 +6,6 @@
     <link rel="stylesheet" href="/asset/css/mui.min.css"/>
     <link rel="stylesheet" href="/asset/css/chat.css"/>
     <link rel="stylesheet" href="/asset/css/audio.css"/>
-    <script src="/asset/js/mui.min.js"></script>
-    <script src="/asset/js/vue.min.js"></script>
-    <script src="/asset/js/axios.min.js"></script>
-    <script src="/asset/js/util.js"></script>
-    <script src="/asset/js/foot.js"></script>
-
     <title>GoIM</title>
 </head>
 <body>
@@ -29,11 +23,10 @@
         <span class="mui-icon mui-icon-person"></span>
         <span class="mui-tab-label">我的</span>
     </a>
-
 </nav>
 <header class="mui-bar mui-bar-nav">
 </header>
-<div class="mui-content" id="pageapp">
+<div class="mui-content" id="app">
     <!--联系人-->
     <div id="tabbar-concat" class="mui-control-content mui-active" v-show="win=='main'">
         <header class="mui-bar mui-bar-nav">
@@ -53,7 +46,7 @@
         </ul>
     </div>
     <!--群聊-->
-    <div id="tabbar-group" class="mui-control-content" v-show="win=='main'">
+    <div id="tabbar-group" class="mui-control-content" v-show="win!='main'">
         <header class="mui-bar mui-bar-nav">
             <h1 class="mui-title">群聊</h1>
         </header>
@@ -105,7 +98,7 @@
     <!--聊天主界面-->
     <div v-show="win!='main'">
         <header class="mui-bar mui-bar-nav">
-            <a class="mui-icon mui-icon-left-nav mui-pull-left" @tap="win='main'"></a>
+            <a class="mui-icon mui-icon-left-nav mui-pull-left" @tap="win=='main'"></a>
             <h1 class="mui-title" v-text="title"></h1>
         </header>
         <div id="convo" data-from="Sonu Joshi">
@@ -189,5 +182,11 @@
     <audio id="audio" style="display: none"></audio>
     <audio id="audio4play" style="display: none"></audio>
 </div>
+<script src="/asset/js/mui.min.js"></script>
+<script src="/asset/js/vue.min.js"></script>
+<script src="/asset/js/axios.min.js"></script>
+<script src="/asset/js/util.js"></script>
+<script src="/asset/js/foot.js"></script>
+
 </body>
 </html>

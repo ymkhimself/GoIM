@@ -18,8 +18,9 @@ func Upload(c *gin.Context) {
 		return
 	}
 	filename:= fmt.Sprintf("%d%d%s",time.Now().Unix(),rand.Intn(100),filetype)
-	err = c.SaveUploadedFile(file,"/asset/mnt/"+filename)
+	err = c.SaveUploadedFile(file,"asset/mnt/"+filename)
 	if err != nil {
+		log.Println(err.Error())
 		util.RespFail(c,"上传失败")
 		return
 	}

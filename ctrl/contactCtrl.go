@@ -6,6 +6,7 @@ import (
 	"GoIM/util"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
+	"log"
 	"strconv"
 	"time"
 )
@@ -16,6 +17,7 @@ func LoadFriend(c *gin.Context) {
 	if err := db.DB.Model(&model.User{}).
 		Joins("left join contacts on contacts.owner_id = ? AND contacts.cate = ? AND users.id = contacts.owner_id", id, 1).
 		Scan(&friends).Error; err != nil {
+		log.Println(err.Error())
 		util.RespFail(c, "加载失败")
 		return
 	}
@@ -28,6 +30,7 @@ func LoadCommunity(c *gin.Context) {
 	if err := db.DB.Model(&model.Community{}).
 		Joins("left join contacts on contacts.owner_id = ? AND contacts.cate = ? AND communities.id = contacts.dst_id", id, 2).
 		Scan(&communitys).Error; err != nil {
+		log.Println(err.Error())
 		util.RespFail(c, "加载失败")
 		return
 	}
@@ -124,5 +127,5 @@ func CreateCommunity(c *gin.Context) {
 	community.OwnerId, _ = strconv.Atoi(id)
 	community.CreatedAt = time.Now()
 	db.DB.Create(&community)
-	util.RespSuccess(c,"",community.ID)
+	util.RespSuccess(c, "", community.ID)
 }
