@@ -290,6 +290,7 @@ var app = new Vue(
                 this.msglist = this.msglist.concat(data)
                 this.reset();
                 var that = this;
+                console.log("来了")
                 that.timer = setTimeout(function () {
                     window.scrollTo(0, document.getElementById("convo").offsetHeight);
                     clearTimeout(that.timer)
@@ -357,7 +358,6 @@ var app = new Vue(
             },
             onmessage: function (data) {
                 this.loaduserinfo(data.userId, function (user) {
-                    // console.log(user)
                     this.showmsg(user, data)
                 }.bind(this))
             },
@@ -417,6 +417,7 @@ var app = new Vue(
                     if (res.data.code !== 0) {
                         mui.toast("加载出错")
                     } else {
+                        console.log(res.data.data)
                         that.communitys = res.data.data || [];
                     }
                 })
@@ -477,12 +478,8 @@ var app = new Vue(
                 var that = this;
                 mui.prompt('', '请输入群名', '创建群聊', ['取消', '确认'], function (e) {
                     if (e.index === 1) {
-                        if (e.value !== '') {
-                            mui.toast('格式错误');
-                        } else {
-                            //mui.toast(e.value);
                             axios.post("/contact/createcommunity", {
-                                name: parseInt(e.value),
+                                name: e.value,
                                 ownerId: userId(),
                             }).then(function (res) {
                                 if (res.data.code !== 0) {
@@ -492,7 +489,6 @@ var app = new Vue(
                                     mui.toast("创建成功,群号为" + res.data.data)
                                 }
                             })
-                        }
                     } else {
                         //mui.toast('您取消了入库');
                     }

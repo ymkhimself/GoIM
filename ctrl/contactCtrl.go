@@ -7,7 +7,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"log"
-	"strconv"
 	"time"
 )
 
@@ -49,7 +48,7 @@ func AddFriend(c *gin.Context) {
 	var contact model.Contact
 
 	if form.DstId == form.OwnerId {
-		util.RespFail(c,"不能添加自己为好友")
+		util.RespFail(c, "不能添加自己为好友")
 	}
 	var user model.User
 	db.DB.Where("id = ?", form.DstId).First(&user)
@@ -90,10 +89,15 @@ func AddFriend(c *gin.Context) {
 	util.RespSuccess(c, "", nil)
 }
 
-//加群
+// JoinCommunity 加群
 func JoinCommunity(c *gin.Context) {
 	var form AddFrom
-	c.Bind(&form)
+	err := c.Bind(&form)
+	if err != nil {
+		log.Println(err.Error())
+		util.RespFail(c,"添加失败")
+		return
+	}
 
 	var community model.Community
 	db.DB.Where("id = ?", form.DstId).First(&community)
@@ -113,7 +117,7 @@ func JoinCommunity(c *gin.Context) {
 	contact.DstId = form.DstId
 	contact.Cate = 2
 	contact.CreateAt = time.Now()
-	err := db.DB.Create(&contact)
+	err = db.DB.Create(&contact).Error
 	if err != nil {
 		util.RespFail(c, "添加失败")
 		return
@@ -122,14 +126,32 @@ func JoinCommunity(c *gin.Context) {
 	util.RespSuccess(c, "添加成功", nil)
 }
 
+type CreateFrom struct {
+	Name    string `json:"name"`
+	OwnerId int    `json:"ownerId"`
+}
+
 func CreateCommunity(c *gin.Context) {
-	name := c.PostForm("name")
-	id := c.PostForm("id")
+	var form CreateFrom
+	err := c.Bind(&form)
+	if err != nil {
+		log.Println(err.Error())
+		util.RespFail(c,"失败")
+		return
+	}
 	var community model.Community
 
-	community.Name = name
-	community.OwnerId, _ = strconv.Atoi(id)
+	community.Name = form.Name
+	community.OwnerId = form.OwnerId
 	community.CreatedAt = time.Now()
 	db.DB.Create(&community)
+	contact := model.Contact{
+		OwnerId:  form.OwnerId,
+		DstId:    community.ID,
+		Cate:     2,
+		CreateAt: time.Now(),
+	}
+	db.DB.Create(&contact)
+	AddCommunityId(form.OwnerId, community.ID)
 	util.RespSuccess(c, "", community.ID)
 }
