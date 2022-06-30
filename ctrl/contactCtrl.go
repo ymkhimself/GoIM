@@ -1,7 +1,7 @@
 package ctrl
 
 import (
-	"GoIM/asset/db"
+	"GoIM/db"
 	"GoIM/model"
 	"GoIM/util"
 	"github.com/gin-gonic/gin"

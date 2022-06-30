@@ -1,7 +1,7 @@
 package ctrl
 
 import (
-	"GoIM/asset/db"
+	"GoIM/db"
 	"GoIM/model"
 	"GoIM/util"
 	"encoding/json"
@@ -46,7 +46,7 @@ func Chat(c *gin.Context) {
 
 	//获取全部群的id
 	comIds := make([]int,0)
-	if err :=db.DB.Select("dist_id").Where("owner_id = ? ADN cate = 1",id).Error;err != nil {
+	if err := db.DB.Select("dist_id").Where("owner_id = ? ADN cate = 1",id).Error;err != nil {
 		log.Println(err.Error())
 		util.RespFail(c,"加载失败")
 		return
@@ -117,7 +117,12 @@ func dispatch(data []byte) {
 	case model.CMD_ROOM_MSG:
 		mutex.Lock()
 		for _, v := range clientMap {
-			v.DataQueue <- data
+			//if k != msg.UserId {
+			//	v.DataQueue <- data
+			//}
+			if v.GroupSets.Has(msg.DstId) {
+				v.DataQueue<-data
+			}
 		}
 		mutex.Unlock()
 	case model.CMD_HEART:

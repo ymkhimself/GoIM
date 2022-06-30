@@ -124,7 +124,6 @@ var app = new Vue(
                     name: "名片",
                     id: "person"
                 }
-
             ],
             timer: 0,
             recorder: {},
@@ -156,6 +155,7 @@ var app = new Vue(
                 document.getElementById('audio4play').play();
             },
             startrecorder: function () {
+                console.log("触发了")
                 let audioTarget = document.getElementById('audio');
                 var types = ["video/webm",
                     "audio/webm",
